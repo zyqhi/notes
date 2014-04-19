@@ -8,5 +8,11 @@
   layman -L
   添加一个layman，类似与ubuntu添加源的概念
   layman -a pentoo #pentoo是上一个命令列出的layman中的一个
+
   安装软件
-  和使用portage一样，直接emerge就可以了
+  先到http://gpo.zugaina.org/ 搜索一下要安装的软件所在的layman或者用
+  google搜索“gentoo 软件名”来找软件包，然后查看其layman，添加layman，
+  然后便可以
+  emerge package
+  安装软件了。
+  和使用portage一样，直接emerge就可以
