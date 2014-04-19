@@ -1,0 +1,14 @@
+* 说明
+  管理gentoo系统需要方法和工具，包括portage管理工具和layman管理
+* eix
+** eix说明
+   eix用于协助管理portage系统，为portage和layman中的包建立索引，方便快
+   速查询，比单纯的emerge -s命令不知道快多少倍，而且还有颜色
+** eix安装
+   emerge -av eix
+** eix使用
+   eix-update #更新数据库
+   eix key #查找包含key关键字的软件包
+
+* equery
+* eselect
