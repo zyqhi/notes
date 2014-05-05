@@ -1,0 +1,8 @@
+* 说明
+  系统引导，grub2
+* 使用
+  发现其他系统 安装os-probe，然后grub2-mkconfig
+  设置主题 ,通过设置/etc/default/grub文件，将
+  GRUB_THEME="/path/to/theme/theme.txt"，
+  路径一定要设置正确，然后grub2-mkconfig > /boot/grub2/grub.cfg
+

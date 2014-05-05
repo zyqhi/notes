@@ -1,0 +1,3 @@
+* linux桌面需要的一些东西
+  主题：zukitwo
+  shell 字体dejauv mono 12

@@ -1,0 +1,15 @@
+* 说明
+  *egypt* 可以为代码生成dot文件，再用graphviz工具生成图片
+* 使用
+  egypt依赖gcc，可以在gcc编译时加入 /-fdump-rtl-expand/ 选项，也可以在
+  Makefile中加入选项。这样编译完成后便生成了*.expand文件，运行
+  #+BEGIN_SRC #!/bin/bash
+  egypt foo.c.166r.expand > foo.dot
+  dot -Gpage=8.5,11 -Tpng -o foo.png
+  #+END_SRC
+  也可以一条命令完成
+  #+BEGIN_SRC #!/bin/bash
+  egypt foo.c.166r.expand | dot -Gpage=8.5,11 -Tpng -o foo.png
+  #+END_SRC
+  
+  
