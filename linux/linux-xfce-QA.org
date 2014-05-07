@@ -1,0 +1,2 @@
+Q： 桌面图标和背景消失，右击鼠标没反映？
+A： cd ~/.cache && rm -fr session， 然后重启xdm即可。
