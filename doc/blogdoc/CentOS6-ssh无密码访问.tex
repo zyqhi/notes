@@ -1,0 +1,83 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 通用blog指南文档格式
+% LaTeX Template
+% Version 1.0 (6/20/2014)
+%
+% 作者:周永强
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[a4paper]{article}
+
+\usepackage{zhfontcfg} % 中文支持包，字体定义等
+\usepackage{geometry} % 使得用这个宏包，减少两边的白边，使得看上去更紧凑
+\usepackage{indentfirst} % 中文首行缩进
+\usepackage{xcolor} % 使用颜色
+\usepackage{verbments} % 用于插入代码
+
+\linespread{1} % 设置行距，这里为单倍行距，也可以设置其他值改变行距
+\setlength{\parskip}{0.5\baselineskip} % 设置段落间距
+%\setmonofont{AR PL UKai CN} % 中文等宽，不然代码里面中文乱码
+
+%----------------------------------------------------------------------------------------
+%    文档信息
+%----------------------------------------------------------------------------------------
+
+\title{CentOS6 ssh配置无密码访问} % 文档名称
+\author{周永强} % 作者姓名
+\date{\today} % 文档日期
+
+\begin{document}
+
+\maketitle % 插入文档标题
+
+\section{说明} % 可以为摘要
+
+\subsection{目的} % 是什么
+本文档讲述如何设置ssh无密码访问，环境为两台装有CentOS 6.4的计算机，每台计算机至少有一块以太网卡，二者可以通过网络相互访问，即通过主机名可以相互ping通，二者的主机名分别为node01和node02。
+\begin{pyglist}[language=bash]
+   root@node01表示： 位于主机node01上的root用户。
+   root@node01表示： 位于主机node02上的root用户。
+\end{pyglist}
+更准备的表述为：通过设置ssh使得root@node01可以无密码访问root@node02。
+
+\subsection{原理} % 为什么
+root@node01产生自己的公钥和私钥，并将自己的公钥上传到root@node02的信任文件里面，这样root@node01用户每次通过ssh登录到root@node02时便可通过rsa进行验证，免去输入密码的麻烦。
+
+\section{配置过程} % 怎么做
+
+\begin{enumerate} % 序列
+  \item root@node02 : 编辑/etc/ssh/sshd\_config文件，去掉如下条目的内容前的注释符号\#
+    \begin{pyglist}[language=bash]
+      RSAAuthentication yes
+      PubkeyAuthentication yes
+      AuthorizedKeysFile     .ssh/authorized_keys
+    \end{pyglist}
+
+  \item root@node02 : 重启sshd服务
+    \begin{pyglist}[language=bash]
+      service sshd restart
+    \end{pyglist}
+
+  \item root@node01 : 生成自己的密钥和私钥，直接enter按照默认设置即可，不需要输入任何内容，正常情况下这一步执行完成后，应该在~/.ssh目录下生成两个文件id\_rsa(私钥)和id\_rsa.pub（公钥）
+    \begin{pyglist}[language=bash]
+      ssh-keygen -t rsa
+    \end{pyglist}
+  
+ \item root@node01 : 将自己的公钥加入root@node02的信任区，并设置权限
+   \begin{pyglist}[language=bash]
+     ssh root@node02 'mkdir -p /root/.ssh'
+     scp /root/.ssh/id_rsa.pub root@node02:/root/.ssh/authorized_keys
+     ssh root@node02 'chmod  700 /root/.ssh'
+     ssh root@node02 'chmod  600 /root/.ssh/*'
+   \end{pyglist}
+ 
+ \item root@node01 : 完成上述步骤已经可以无密码访问了，但是CentOS 6.4比较乖张，在其Bug Tracker上看到导致原因是当设置selinux为enforcing时，所有客户端的认证都被忽略。解决方法是，运行下列命令。
+   \begin{pyglist}[language=bash]
+     ssh root@node02 'restorecon -R -v /root/.ssh'
+   \end{pyglist}
+\end{enumerate}
+
+\end{document}
+

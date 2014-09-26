@@ -1,0 +1,122 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%    作者:周永强
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[a4paper]{article}
+
+\usepackage{zhfontcfg} % 中文支持包，字体定义等
+\usepackage{geometry} % 使得用这个宏包，减少两边的白边，使得看上去更紧凑
+\usepackage{indentfirst} % 中文首行缩进
+\usepackage{xcolor} % 使用颜色
+\usepackage{verbments} % 用于插入代码
+
+\linespread{1} % 设置行距，这里为单倍行距，也可以设置其他值改变行距
+\setlength{\parskip}{0.5\baselineskip} % 设置段落间距
+%\setmonofont{AR PL UKai CN} % 中文等宽，不然代码里面中文乱码
+
+%----------------------------------------------------------------------------------------
+%    文档信息
+%----------------------------------------------------------------------------------------
+
+\title{使用gdb调试mpich多进程程序} % 文档名称
+\author{周永强} % 作者姓名
+\date{\today} % 文档日期
+
+\begin{document}
+
+\maketitle % 插入文档标题
+
+\section{说明} % 可以为摘要
+
+\subsection{目的} % 是什么
+本文档讲述如何在linux下通过gdb对mpich程序进行调试，mpich运行通常是多个进程同时运行，因此调试起来比较麻烦，而且具有一定的技巧。文中通过一个调试例子展示如何进行调试。
+
+\subsection{原理} % 为什么
+调试的方式有两个要点：一是通过进程号来进入要调试的程序，二是通过在源代码中设置循环的技巧使程序阻塞。
+
+\section{调试过程} % 怎么做
+要调试的程序为hellow，其源代码为hello.c。
+\begin{enumerate} % 序列
+  \item 编辑hello.c的源文件如下
+    \begin{pyglist}[language=c]
+#include <stdio.h>
+#include "mpi.h"
+
+#define MAX_STRING 100
+ 
+int main( int argc, char *argv[] )
+{
+    char greeting[MAX_STRING];
+    int my_rank;
+    int comm_sz;
+    int a = 1;
+    
+    MPI_Init(NULL, NULL);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
+    
+    if (my_rank == 0)
+    {
+        printf("I am root.\n");
+        sprintf(greeting, "Hello, my child", my_rank, comm_sz);
+        
+        while (a == 1);
+        MPI_Send(greeting, strlen(greeting)+1,
+          MPI_CHAR, 1, 0, MPI_COMM_WORLD);
+    }
+    else
+    {
+        while (a == 1);
+        MPI_Recv(greeting, MAX_STRING, MPI_CHAR,
+          0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("I am child: %d, greeting from root: %s\n",
+          my_rank, greeting);
+    }
+    
+    MPI_Finalize();
+    return 0;
+}
+    \end{pyglist}
+
+  \item 编译程序，注意加上参数-g
+    \begin{pyglist}[language=bash]
+      mpicc -g hellow.c -o hellow
+    \end{pyglist}
+
+  \item 运行hellow，这里以两个进程为例
+    \begin{pyglist}[language=bash]
+      mpiexec -n 2 ./hellow
+    \end{pyglist}
+  
+ \item 由于设置了死循环，所以上述程序会阻塞执行，另外打开两个终端，分别对两个进程进行调试，调试前需要先获取进程的pid号，获取命令为
+   \begin{pyglist}[language=bash]
+     ps aux | grep hellow
+   \end{pyglist}
+ 
+ \item 找到对应的进程号，我机器上hellow对应的两个进程分别为9135和9136，可以对二者分别进行调试，调试9135号进程的方式为，首先运行gdb，命令为
+   \begin{pyglist}[language=bash]
+     gdb
+   \end{pyglist}
+   
+ \item gdb启动以后，对9135进程调试，9136调试方式一样，在gdb中运行命令
+   \begin{pyglist}[language=bash]
+     attach 9135
+   \end{pyglist}
+   
+ \item 此时可以看到程序阻塞在循环处，通过设置循环的变量，使循环的条件变为假，跳出循环，进入下一步的执行，便可接着进行调试了
+   \begin{pyglist}[language=bash]
+     set var a = 0
+   \end{pyglist}
+   
+\end{enumerate}
+
+\end{document}
+
+
+
+
+
+
+
